@@ -1,30 +1,37 @@
 package com.example;
 
 import net.fabricmc.api.ModInitializer;
-
-import net.minecraft.resources.Identifier;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.text.Text;
 
 public class ExampleMod implements ModInitializer {
-	public static final String MOD_ID = "modid";
+    public static final String MOD_ID = "06semoclient";
+    private boolean initialized = false;
 
-	// This logger is used to write text to the console and the log file.
-	// It is considered best practice to use your mod id as the logger's name.
-	// That way, it's clear which mod wrote info, warnings, and errors.
-	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+    @Override
+    public void onInitialize() {
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (client.player == null || client.world == null) return;
 
-	@Override
-	public void onInitialize() {
-		// This code runs as soon as Minecraft is in a mod-load-ready state.
-		// However, some things (like resources) may still be uninitialized.
-		// Proceed with mild caution.
+            // Oyuna ilk girişte bildirim gönderir
+            if (!initialized) {
+                client.player.sendMessage(Text.literal("§b[06SemoClient] §aPvP Modulleri Aktif!"), false);
+                initialized = true;
+            }
 
-		LOGGER.info("Hello Fabric world!");
-	}
+            // Auto-Criticals: Zıplama esnasında otomatik kritik vuruş desteği
+            if (client.options.attackKey.isPressed() && client.player.isOnGround()) {
+                client.player.jump();
+            }
 
-	public static Identifier id(String path) {
-		return Identifier.fromNamespaceAndPath(MOD_ID, path);
-	}
+            // PvP ESP / Glow: Etraftaki rakip oyuncuları parlatır
+            for (PlayerEntity player : client.world.getPlayers()) {
+                if (player != client.player) {
+                    player.setGlowingText(true);
+                }
+            }
+        });
+    }
 }
